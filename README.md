@@ -20,6 +20,7 @@ Where:
 - \( m_1 \) and \( m_2 \) are the masses of the bodies.
 - \( r \) is the distance between the centers of the masses.
 
+
 Each planet's position and velocity are updated iteratively, taking into account the gravitational forces exerted by other planets and the sun.
 
 
