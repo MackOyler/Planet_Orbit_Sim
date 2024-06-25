@@ -79,7 +79,7 @@ class Planet:
         force_y = math.sin(theta) * force
         return force_x, force_y
 
-    def update_position(self, planets):
+    def update_position(self, planets, speed_factor):
         total_fx = total_fy = 0
         for planet in planets:
             if self == planet:
@@ -89,11 +89,11 @@ class Planet:
             total_fx += fx
             total_fy += fy
 
-        self.x_vel += total_fx / self.mass * self.TIMESTEP
-        self.y_vel += total_fy / self.mass * self.TIMESTEP
+        self.x_vel += total_fx / self.mass * self.TIMESTEP * speed_factor
+        self.y_vel += total_fy / self.mass * self.TIMESTEP * speed_factor
 
-        self.x += self.x_vel * self.TIMESTEP
-        self.y += self.y_vel * self.TIMESTEP
+        self.x += self.x_vel * self.TIMESTEP * speed_factor
+        self.y += self.y_vel * self.TIMESTEP * speed_factor
         self.orbit.append((self.x, self.y))
 
         # Check for orbit completion
@@ -118,14 +118,17 @@ def draw_starfield(win, stars):
         win.fill(WHITE, (star[0], star[1], 2, 2))
 
 
-def draw_information(win, planets, simulation_time):
+def draw_information(win, planets, simulation_time, speed_factor):
     info_text = FONT.render(f"Simulation Time: {round(simulation_time / (3600 * 24), 2)} days", 1, WHITE)
     win.blit(info_text, (10, 10))
+
+    speed_text = FONT.render(f"Speed Factor: {speed_factor}x", 1, WHITE)
+    win.blit(speed_text, (10, 30))
 
     for i, planet in enumerate(planets):
         if not planet.sun:
             orbit_text = FONT.render(f"{planet.name} Orbits: {planet.orbit_count}", 1, WHITE)
-            win.blit(orbit_text, (10, 30 + i * 20))
+            win.blit(orbit_text, (10, 50 + i * 20))
 
 
 def main():
@@ -153,6 +156,7 @@ def main():
 
     paused = False
     simulation_time = 0
+    speed_factor = 1.0
 
     zoom_scale = 1.0
 
@@ -171,16 +175,20 @@ def main():
                     Planet.SCALE *= 1.1
                 if event.key == pygame.K_MINUS:
                     Planet.SCALE /= 1.1
+                if event.key == pygame.K_UP:
+                    speed_factor *= 2
+                if event.key == pygame.K_DOWN:
+                    speed_factor /= 2
 
         if not paused:
             for planet in planets:
-                planet.update_position(planets)
-            simulation_time += Planet.TIMESTEP
+                planet.update_position(planets, speed_factor)
+            simulation_time += Planet.TIMESTEP * speed_factor
 
         for planet in planets:
             planet.draw(WIN)
 
-        draw_information(WIN, planets, simulation_time)
+        draw_information(WIN, planets, simulation_time, speed_factor)
 
         pygame.display.update()
 
