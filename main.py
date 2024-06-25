@@ -35,6 +35,8 @@ class Planet:
         self.orbit = []
         self.sun = False
         self.distance_to_sun = 0
+        self.orbit_count = 0
+        self.previous_angle = None
 
         self.x_vel = 0
         self.y_vel = 0
@@ -94,6 +96,13 @@ class Planet:
         self.y += self.y_vel * self.TIMESTEP
         self.orbit.append((self.x, self.y))
 
+        # Check for orbit completion
+        angle = math.atan2(self.y, self.x)
+        if self.previous_angle is not None:
+            if self.previous_angle < 0 and angle >= 0:
+                self.orbit_count += 1
+        self.previous_angle = angle
+
 
 def create_starfield():
     stars = []
@@ -107,6 +116,16 @@ def create_starfield():
 def draw_starfield(win, stars):
     for star in stars:
         win.fill(WHITE, (star[0], star[1], 2, 2))
+
+
+def draw_information(win, planets, simulation_time):
+    info_text = FONT.render(f"Simulation Time: {round(simulation_time / (3600 * 24), 2)} days", 1, WHITE)
+    win.blit(info_text, (10, 10))
+
+    for i, planet in enumerate(planets):
+        if not planet.sun:
+            orbit_text = FONT.render(f"{planet.name} Orbits: {planet.orbit_count}", 1, WHITE)
+            win.blit(orbit_text, (10, 30 + i * 20))
 
 
 def main():
@@ -133,6 +152,9 @@ def main():
     planets = [sun, earth, mars, mercury, venus]
 
     paused = False
+    simulation_time = 0
+
+    zoom_scale = 1.0
 
     while run:
         clock.tick(60)
@@ -145,13 +167,20 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     paused = not paused
+                if event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+                    Planet.SCALE *= 1.1
+                if event.key == pygame.K_MINUS:
+                    Planet.SCALE /= 1.1
 
         if not paused:
             for planet in planets:
                 planet.update_position(planets)
+            simulation_time += Planet.TIMESTEP
 
         for planet in planets:
             planet.draw(WIN)
+
+        draw_information(WIN, planets, simulation_time)
 
         pygame.display.update()
 
